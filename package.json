@@ -1,0 +1,24 @@
+{
+  "name": "velo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Velo — anonymous cash liquidity on Stellar, by Nullifier Systems",
+  "workspaces": [
+    "apps/*",
+    "mobile/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:frontend": "npm run dev -w mobile/frontend",
+    "dev:backend": "npm run dev -w mobile/backend"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.0"
+  },
+  "packageManager": "npm@10.0.0"
+}
