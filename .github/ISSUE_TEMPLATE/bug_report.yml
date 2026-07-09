@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a reproducible bug in Velo
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve Velo.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+      placeholder: Describe the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the minimal steps needed to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Node version, Rust version, OS, and network details.

@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest an improvement or new capability for Velo
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for suggesting a new direction for Velo.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user or contributor problem does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior or capability you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

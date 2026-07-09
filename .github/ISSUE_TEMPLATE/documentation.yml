@@ -1,0 +1,17 @@
+name: Documentation
+
+description: Suggest a documentation improvement or correction
+labels: [documentation]
+body:
+  - type: textarea
+    id: issue
+    attributes:
+      label: Documentation issue
+      description: What should be improved or clarified?
+    validations:
+      required: true
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Which file or section should be updated?
