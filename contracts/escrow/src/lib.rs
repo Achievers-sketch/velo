@@ -108,7 +108,9 @@ impl Htlc for EscrowContract {
             status: TradeStatus::Locked,
         };
         env.storage().persistent().set(&key, &state);
-        env.storage().persistent().extend_ttl(&key, 100_000, 100_000);
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, 100_000, 100_000);
 
         env.events()
             .publish((symbol_short(&env, "locked"), id), amount);
