@@ -1,7 +1,7 @@
  import type { FastifyInstance } from "fastify";
 import { CONTRACTS } from "@velo/shared";
 import { lockEscrow, releaseEscrow } from "../lib/stellar.js";
-import { generateSecretPair, randomHex32 } from "../lib/crypto.js";
+import { randomHex32 } from "../lib/crypto.js";
 import { saveCashRequest, getCashRequest, updateStatus } from "../lib/store.js";
 
 const ESCROW_CONTRACT_ID = process.env.ESCROW_CONTRACT_ID ?? CONTRACTS.testnet.escrow;
@@ -11,6 +11,7 @@ interface CashRequestBody {
   seller: string; // G... address of the cash provider
   buyer: string; // G... address of the person requesting cash
   amount_stroops: string; // bigint as string, e.g. "10000000" = 1 XLM/USDC unit
+  secret_hash: string; // 64-character hex string representing SHA256 of the secret
 }
 
 /**
@@ -40,14 +41,13 @@ export async function cashRoutes(app: FastifyInstance) {
     const paid = await (app as any).requirePayment(req, reply, "0.01");
     if (!paid) return;
 
-    const { seller, buyer, amount_stroops } = req.body ?? ({} as CashRequestBody);
-    if (!seller || !buyer || !amount_stroops) {
-      reply.code(400).send({ error: "seller, buyer, and amount_stroops are required" });
+    const { seller, buyer, amount_stroops, secret_hash } = req.body ?? ({} as CashRequestBody);
+    if (!seller || !buyer || !amount_stroops || !secret_hash) {
+      reply.code(400).send({ error: "seller, buyer, amount_stroops, and secret_hash are required" });
       return;
     }
 
     const tradeId = randomHex32();
-    const { secretHex, secretHashHex } = generateSecretPair();
 
     try {
       await lockEscrow({
@@ -56,7 +56,7 @@ export async function cashRoutes(app: FastifyInstance) {
         seller,
         buyer,
         amountStroops: BigInt(amount_stroops),
-        secretHashHex,
+        secretHashHex: secret_hash,
         timeoutLedgers: DEFAULT_TIMEOUT_LEDGERS,
       });
     } catch (err) {
@@ -74,19 +74,17 @@ export async function cashRoutes(app: FastifyInstance) {
       seller,
       buyer,
       amountStroops: amount_stroops,
-      secretHex,
-      secretHashHex,
+      secretHex: "", // The API no longer knows the secret
+      secretHashHex: secret_hash,
       status: "locked",
       createdAt: new Date().toISOString(),
     });
 
     const baseUrl = process.env.FRONTEND_BASE_URL ?? "https://app.velo.cash";
     reply.code(201).send({
-      // The secret rides in the URL itself, not in any GET response —
-      // whoever holds this link holds the claim. See ClaimQR.tsx: it
-      // reads `secret` from the query string, never from the API.
-      claim_url: `${baseUrl}/claim/${tradeId}?secret=${secretHex}`,
-      qr_payload: `velo://claim?request_id=${tradeId}&secret=${secretHex}&contract=${ESCROW_CONTRACT_ID}`,
+      // The secret is held client-side and is NOT returned by the API
+      claim_url: `${baseUrl}/claim/${tradeId}`,
+      qr_payload: `velo://claim?request_id=${tradeId}&contract=${ESCROW_CONTRACT_ID}`,
       instructions: "Show this QR to the cash provider to receive your cash.",
     });
   });
