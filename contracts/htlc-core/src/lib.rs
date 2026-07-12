@@ -49,8 +49,8 @@ pub trait Htlc {
     /// the trade is not in `Locked` status.
     fn release(env: Env, id: BytesN<32>, secret: BytesN<32>);
 
-    /// Permissionless refund back to the seller once timeout_ledger has
-    /// passed. Anyone can call this — it does not require the seller's
+    /// Permissionless refund back to the buyer once timeout_ledger has
+    /// passed. Anyone can call this — it does not require the buyer's
     /// signature, only that the timeout has elapsed.
     fn refund(env: Env, id: BytesN<32>);
 }
