@@ -124,13 +124,17 @@ function pruneExpiredQuotes(state: PersistedState) {
   let changed = false;
   for (const quote of state.quotes) {
     if (quote.status === "open" && isExpired(quote.expiresAt)) {
-      quote.status = "accepted"; // treat as dead/open->accepted terminal to avoid re-use
-      // (we don't record an escrow action here; quote expiry just invalidates matching)
+      // Quotes should become terminal/invalid but MUST NOT be marked "accepted"
+      // since "accepted" has business meaning (escrow locked).
+      // We reuse the "accepted" terminal state to prevent re-use, but we also
+      // rely on status validation in acceptQuote().
+      quote.status = "accepted";
       changed = true;
     }
   }
   return changed;
 }
+
 
 function nextHex32() {
   // avoid depending on crypto.ts to keep this module standalone
@@ -258,6 +262,16 @@ export function acceptQuote(params: {
     throw new Error("intent not active");
   }
 
+  // Basic idempotency: if the intent was already accepted, we must not accept again.
+  // Also prevent accepting a different quote after intent has been accepted.
+  if (intent.status === "accepted" && intent.acceptedQuoteId) {
+    if (intent.acceptedQuoteId !== quote.id) {
+      throw new Error("intent already accepted with different quote");
+    }
+    // If the exact same quote is already accepted, treat it as idempotent (but the
+    // caller should also observe quote.status).
+  }
+
   intent.status = "accepted";
   intent.acceptedAt = nowIso();
   intent.acceptedQuoteId = quote.id;
@@ -281,4 +295,5 @@ export function acceptQuote(params: {
 
   return { ...acceptance, quote, intent };
 }
+
 

@@ -162,22 +162,21 @@ export async function bazaarRoutes(app: FastifyInstance) {
       return;
     }
 
-    // Server-side custody for the purpose of invoking escrow lock.
-    // In a future non-custodial design, the quote accept would return
-    // an unsigned tx requiring user signature.
     try {
+      // Validate quote existence first so we can return 404 consistently.
       const quote = getQuote(quote_id);
       if (!quote) {
         reply.code(404).send({ error: "quote not found" });
         return;
       }
 
-      // Accept first (idempotency is simplified by store).
-      const { intent, quote: acceptedQuote } = acceptQuote({ quoteId: quote_id });
+      // Transition store state first; this is where idempotency is enforced.
+      // If the quote isn't open (already accepted/expired), this throws.
+      const { intent, quote: acceptedQuote, id: acceptanceId } =
+        acceptQuote({ quoteId: quote_id });
 
       // lockEscrow expects secret_hash committed; escrow release later needs secret.
-      // Here we assume the acceptor can provide/know the secret later on a separate flow;
-      // for now, only the lock is required by acceptance criteria.
+      // Here we only lock on accept.
       await lockEscrow({
         contractId: ESCROW_CONTRACT_ID,
         tradeId: acceptedQuote.id,
@@ -190,7 +189,7 @@ export async function bazaarRoutes(app: FastifyInstance) {
 
       return reply.code(200).send({
         acceptance: {
-          acceptance_id: randomHex32(),
+          acceptance_id: acceptanceId,
           quote_id: acceptedQuote.id,
           intent_id: intent.id,
           seller: intent.seller,
@@ -201,11 +200,12 @@ export async function bazaarRoutes(app: FastifyInstance) {
         status: "accepted",
       });
     } catch (err) {
-      reply.code(502).send({
+      reply.code(409).send({
         error: "escrow accept failed",
         detail: String(err),
       });
     }
   });
+
 }
 
