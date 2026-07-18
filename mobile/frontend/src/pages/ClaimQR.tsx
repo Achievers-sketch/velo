@@ -27,6 +27,35 @@ export default function ClaimQR() {
   const [error, setError] = useState<string | null>(null);
   const [releasing, setReleasing] = useState(false);
 
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    const saved = localStorage.getItem("velo-theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("velo-theme");
+    if (!saved) {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = (e: MediaQueryListEvent) => {
+        setTheme(e.matches ? "dark" : "light");
+      };
+      mediaQuery.addEventListener("change", handler);
+      return () => mediaQuery.removeEventListener("change", handler);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    localStorage.setItem("velo-theme", nextTheme);
+  };
+
   const load = useCallback(async () => {
     if (!id) return;
     try {
@@ -51,9 +80,36 @@ export default function ClaimQR() {
     return () => clearInterval(interval);
   }, [load]);
 
+  const renderThemeToggle = () => (
+    <button
+      className="theme-toggle"
+      onClick={toggleTheme}
+      aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+    >
+      {theme === "light" ? (
+        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      ) : (
+        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      )}
+    </button>
+  );
+
   if (!id) {
     return (
       <div className="claim-page">
+        {renderThemeToggle()}
         <p className="claim-page__state claim-page__state--error">
           This link is missing a claim ID.
         </p>
@@ -64,6 +120,7 @@ export default function ClaimQR() {
   if (error === "not-found") {
     return (
       <div className="claim-page">
+        {renderThemeToggle()}
         <p className="claim-page__state claim-page__state--error">
           We couldn't find this claim. It may have expired or the link may be
           incorrect.
@@ -75,6 +132,7 @@ export default function ClaimQR() {
   if (error) {
     return (
       <div className="claim-page">
+        {renderThemeToggle()}
         <p className="claim-page__state claim-page__state--error">
           Couldn't load this claim right now. Check your connection and try
           again.
@@ -86,6 +144,7 @@ export default function ClaimQR() {
   if (!status) {
     return (
       <div className="claim-page" aria-busy="true" aria-live="polite">
+        {renderThemeToggle()}
         <div className="claim-ticket claim-ticket--loading" aria-label="Loading your claim">
           <div className="claim-ticket__header">
             <span className="claim-ticket__brand">VELO</span>
@@ -130,6 +189,7 @@ export default function ClaimQR() {
 
   return (
     <div className="claim-page">
+      {renderThemeToggle()}
       <div className="claim-ticket">
         <div className="claim-ticket__header">
           <span className="claim-ticket__brand">VELO</span>
