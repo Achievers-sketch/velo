@@ -1,13 +1,9 @@
-# TODO — Bazaar intent-layer endpoints (#13)
+# TODO
 
-- [ ] Inspect/create plan for bazaar endpoints + persistence design
-- [x] Create file-backed persistence layer (apps/api/src/lib/store-bazaar.ts + apps/api/data/bazaar.json)
-
-- [ ] Implement Bazaar routes (apps/api/src/routes/bazaar.ts)
-- [ ] Register routes in apps/api/src/app.ts
-- [ ] Implement intent expiration + feed pruning
-- [ ] Implement matching logic for quotes
-- [ ] Implement accept endpoint locking Stellar escrow via existing lockEscrow
-- [ ] Add basic integration/unit tests (optional)
-- [ ] Run build/tests for apps/api
+## Escrow #16
+- [ ] Inspect escrow CI workaround location (continue-on-error) and remove it
+- [ ] Implement real Soroban token test client wiring in `contracts/escrow/src/lib.rs`
+- [ ] Add edge-case tests: double-lock, zero/negative amounts, invalid timeouts, unauthorized release
+- [ ] Update contract to enforce seller authorization on `release`
+- [ ] Run `cargo test --workspace` under `contracts/` and ensure clean pass
 
